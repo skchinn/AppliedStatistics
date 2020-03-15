@@ -1,0 +1,175 @@
+---
+title: "Exploration 2.1: Chip Melting"
+author: "Samantha Chinn"
+date: "2/9/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, results = "show", fig.show = "show")
+library(tidyverse)
+library(readxl)
+chocolatedata <- read_excel("C:/Users/Samantha Chinn/OneDrive - West Point/MA376 - Applied Stats/chocolatedata.xlsx")
+```
+1. For this study, we will have 12 participants. Using a random number generator each participant will be given a number 1 or 2. If they receive 1 they will first melt the dark chocolate chip, then the white chocolate chip. If they receive 2 they will first melt the white chocolate chip, then the dark chocolate chip. The participants will be told how to place the chip in their mouth to melt it. To be a participant in this study, the person must be in MA376 G hour during AY20-2 and they must not be allergic to chocolate.
+
+2.  Sources of Variation diagram:
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+time it takes to melt    |chip type                        |body temperature
+the chocolate chip (s)   |                                 |pressure on the chip
+-------------------------|                                 |amount of saliva            
+Inclusion Criteria:      |                                 |chip temperature
+student in MA376 AY20-2  |                                 |chip size
+not allergic to chocolate|                                 |
+-------------------------|                                 |
+Design:                  |                                 |
+randomly assigned order  |                                 |
+                         |                                 |
+
+3.  The sources of unexplained variation are all related to the participant in the study. Based on this commonality, I suggest that we group these sources of unexplained variation under 'person effect'.
+
+4.  A repeated measures type of matched pairs design is feasible in this study. This would be carried out by randomly assigning each participant a number 1 or 2. The numbers denote which chip they will melt first and the remaining chip will be melted second. By having each participant melt both type of chips, the person effect will be removed as a source of unexplained variation as the variability is effectively held constant.
+
+5.  Random assignment still plays an important role in a matched pairs design because it eliminates other areas of potential variability. For instance, if all participants melted the dark chocolate chip first and then the white chocolate chip, they might make adjustments on how they melt the white chocolate chip based on their experience with the dark chocolate chip. In doing so, we may expect to see a pattern of difference in melting times between the dark and white chocolate chip based on increased experience. Additionally, the melting of the second chocolate chip may be affected by remains of the first chocolate chip in the participant's mouth.
+
+6.  A two-sample t-test would not be an appropriate analysis to compare the two melting time means because we cannot consider the multiple observations on the same participant as being independent.
+
+7.  Perform calculations for:
+
+Overall mean melting time:
+```{r}
+muall = mean(chocolatedata$Time)
+print(muall)
+```
+SSTotal:
+```{r}
+chocolatedata = chocolatedata %>% group_by(Chocolate) %>%
+  mutate(Participantf = as.factor(Participant))
+contrasts(chocolatedata$Participantf)=contr.sum
+lm.mod = lm(Time~Chocolate+Participantf, data = chocolatedata)
+anova = anova(lm.mod)
+print(anova)
+SST = sum(anova$"Sum Sq")
+print(SST)
+```
+
+Mean melting time of dark chocolate:
+```{r}
+darkchoc = chocolatedata %>% group_by(Chocolate) %>% filter(Chocolate == "Dark")
+darkmu = mean(darkchoc$Time)
+print(darkmu)
+```
+
+Mean melting time of white chocolate:
+```{r}
+whitechoc = chocolatedata %>% group_by(Chocolate) %>% filter(Chocolate == "White")
+whitemu = mean(whitechoc$Time)
+print(whitemu)
+```
+
+Effect of dark chocolate:
+```{r}
+adark = darkmu - muall
+print(adark)
+```
+
+Effect of white chocolate:
+```{r}
+awhite = whitemu - muall
+print(awhite)
+```
+
+SSchip:
+```{r}
+gd = 12 * (adark)^2
+gw = 12 * (awhite)^2
+SSchip = gd + gw
+print(SSchip)
+```
+
+SSError:
+```{r}
+SSE = SST - SSchip
+print(SSE)
+```
+
+8.  Mean of individual participant's melting times:
+```{r}
+indmu = (79+180)/2
+print(indmu)
+```
+
+9.  Compare the average melting time of the individual to the overall mean melting time:
+```{r}
+aind = indmu - muall
+print(aind)
+```
+
+10.  Find the effect of each person:
+```{r}
+chocolatedatadiff <- read_excel("C:/Users/Samantha Chinn/OneDrive - West Point/MA376 - Applied Stats/chocolatedatadiff.xlsx")
+chocoeffect = chocolatedatadiff %>% select(Effect) %>% na.omit(chocolatedatadiff)
+print(chocoeffect)
+```
+
+11.  For participants with larger positive effect values, on average, they take longer to melt the chocolate chips. For participants with a larger negative effect value, on average, they take less time to melt the chocolate chips.
+
+12.  Find the sum of squares for the "person effect":
+```{r}
+chocoeffect = chocoeffect %>% mutate(SEff = (Effect^2)*2)
+SSperson = sum(chocoeffect$SEff)
+print(SSperson)
+```
+
+13.  ANOVA Table:
+
+Source of Variation  | df        | Sum Sq     | Mean Sq
+---------------------|-----------|------------|---------
+Person               |11         |16688.46    |1785.38
+Chip type            |1          |1785.375    |1517.13
+Error                |11         |6324.1      |574.92  
+---------------------|-----------|------------|
+Total                |23         |24797.96    |
+
+14.  Consider the proportion of variation explained by chip type and person:
+```{r}
+SSchip/SST
+SSperson/SST
+```
+7.2% of the total variation is explained by chip type. 67.3% of the total variation is explained by person.
+
+15.  Compute an F-statistic:
+```{r}
+meansqchip = 1517.13
+meansqerror = 574.92
+Fstat = meansqchip/meansqerror
+print(Fstat)
+```
+The F-statistic has a value of 2.64. This is not a large enough value to be stasitically significant or provide strong evidence against the null. 
+
+16.  Predict the melting times for the dark and white chocolate chips:
+```{r}
+preddarktime = muall + chocoeffect[1,1] + darkmu
+print(preddarktime)
+```
+The predicted time for the dark chocolate chip is: 216.0833 seconds
+```{r}
+predwhitetime = muall + chocoeffect[1,1] + whitemu
+print(predwhitetime)
+```
+The predicted time for the white chocolate chip is: 233.3333 seconds
+
+17.  Determine the residuals:
+```{r}
+pred.dark.resid = chocolatedata[1,3] - preddarktime
+print(pred.dark.resid)
+```
+```{r}
+pred.white.resid = chocolatedata[2,3] - predwhitetime
+print(pred.white.resid)
+```
+Because the residuals above are both negative, this means that our prediction equation over estimated the amount of time it will take to melt the chips. 
+
+18.  If we had tested four different types of chips instead of just two, our degrees of freedom for chip type would be 3 instead of 1. The df of chip type is equal to $number of groups - 1$. Additionally, the total df would now sum to 47 and the total number of observations would be 48. For this experiment it may be best to use a randomized block design.

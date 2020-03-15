@@ -1,0 +1,175 @@
+---
+title: "Exploration 2.3: Car Acceleration"
+author: "Samantha Chinn"
+date: "2/17/2020"
+geometry: margin=2cm
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, results = "show", fig.show = "show")
+library(tidyverse)
+cars = read.table("http://www.isi-stats.com/isi2/data/carmpg.txt",header = TRUE)
+heavy = cars %>% filter(weight == "heavy")
+light = cars %>% filter(weight == "light")
+```
+
+1.  This was an observational study.
+
+2.  The two main variables of interest to the study authors is the weight of the car (heavy/light) and the time it takes to accelerate to 60 mph. The response variable is the amount of time it takes to accelerate and the explanatory variable is whether the weight of the car was greater than 2800 kg.
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+time it takes for the car|weight of the car                |engine type
+to accelerate to 60 mph  |                                 |gas type
+-------------------------|                                 |surface            
+Inclusion Criteria:      |                                 |weather
+the 397 cars from        |                                 |car design (aerodynamics)
+Quinlan, 1993 dataset    |                                 |horsepower
+
+3.  Compare the distributions of acceleration times between light and heavy cars:
+```{r}
+cars %>% ggplot(aes(x=weight, y=acceleration,fill=weight)) + 
+  geom_boxplot(binaxis='y',bins=5)+
+  coord_flip() +
+  labs(x="Weight",y="Acceleration")
+```
+
+From the graphs of the distributions above, it appears that heavy cars have a smaller mean acceleration time than lighter cars. The light distribution has multiple outliers with higher values for acceleration, while the heavy distribution has a single outlier. The heavy distribution over has a wider spread than the light distribution.
+
+6.68% of the variation in acceleration times is explained by whether or not the car is heavy. These results could be viewed as surprising because at first glance it seems that heavy cars should take longer to accelerate, but the data says they are faster than lighter cars.
+
+4.  Conduct one-variable analysis:
+```{r}
+model1 <- lm(acceleration ~ weight, data=cars)
+anova(model1)
+```
+The ANOVA table is testing whether there is an effect due to weight of the car.
+
+$H_0$ : $\alpha_1 = \alpha_2$
+
+$H_a$ : $\alpha_1 \neq \alpha_2$
+
+Given that our F-Statistic is so large at 27.962 and the p-value is so small, there is significant evidence against the null hypothesis. We can conclude that there is a statistically significant relationship between acceleration time and car weight. However, this is not evidence of a cause-and-effect relationship because it was an observational study, not an experiment.
+
+5.  Find the effects:
+```{r}
+muheavy = mean(heavy$acceleration)
+mulight = mean(light$acceleration)
+mean = mean(cars$acceleration)
+a1 = muheavy - mean
+a2 = mulight - mean
+```
+The effect of a "heavy" car is -0.7122 and the effect of a "light" car is 0.7122. This is not intuitive because I would think that heavier cars take longer to accelerate, but "heavy" has the negative effect meaning it takes less time to accelerate when compared to the mean, on average. The positive effect of the "light" car means that it takes longer to accelerate when compared to the mean, on average. This makes us believe there is some other factor associated with the acceleration time of a car.
+
+6.  Conduct a one-variable analysis:
+```{r}
+model2 <- lm(acceleration ~ horsepower, data=cars)
+anova(model2)
+```
+The ANOVA table is testing whether there is an effect due to horsepower.
+
+$H_0$ : $\alpha_1 = \alpha_2$
+
+$H_a$ : $\alpha_1 \neq \alpha_2$
+
+```{r}
+high = cars %>% filter(horsepower == "high")
+low = cars %>% filter(horsepower == "low")
+cars %>% ggplot(aes(x=horsepower, y=acceleration,fill=horsepower)) + 
+  geom_boxplot(binaxis='y',bins=5)+
+  coord_flip() +
+  labs(x="Horsepower",y="Acceleration")
+```
+
+The graph above shows that cars with high horsepower have a quicker acceleration time and those with low horsepower take longer to accelerate. This makes sense, and could potentially explain why, on average, the heavier cars were able to accelerate faster than the lighter cars.
+
+Because our F-Statistic is large, 149.12, and our p-value is so small, there is significant evidence against the null hypothesis. There is significant evidence of a relationship between acceleration time and horsepower, but this is not a cause-and-effect relationship because it was not an experiment, only an observational study.
+
+7. Find the effects:
+```{r}
+muhigh = mean(high$acceleration)
+mulow = mean(low$acceleration)
+a1H = muhigh - mean
+a2L = mulow - mean
+```
+
+8.  There is an association between weight and horsepower. When looking at cars with "high" horsepower, 90.4% of them are "heavy" cars. When looking at cars with "low" horsepower, only 20% of them are "heavy" cars. 
+
+9.  Horsepower is a confounding variable on the relationship between weight and acceleration because it is associated with both acceleration and weight.
+
+10.  Knowing that horsepower is a confounding variable, we may think that the reason "heavy" cars had quicker acceleration times is because they had "high" horsepower. 
+
+11. Adjust for horsepower:
+```{r}
+high.adj = high %>% mutate(Horsepower.Adjusted.Acceleration = acceleration - a1H)
+low.adj = low %>% mutate(Horsepower.Adjusted.Acceleration = acceleration - a2L)
+cars.adj = rbind(high.adj,low.adj)
+head(cars.adj)
+```
+
+12.  The horsepower adjusted accelerations are essentially the accelerations of the cars after removing the effect of having a car with "high" or "low" horsepower.
+
+13.  The applet only displays one weight effect value because it will be multiplied by either -1 or 1 depending on "heavy" or "light". If it is light it will multiply $-1*-0.7122$ resulting in an addition of time for acceleration, if it is heavy it will multiply $1*-0.7122$ resulting in a subtraction of time for acceleration.
+
+14.  Light cars are more likely to be low horsepower. In the heavy weight group, the low horsepower cars tend to have larger acceleration times. In the light weight group, the low horsepower cars tend to have smaller acceleration times.
+
+15.  If we add 1.47 to all acceleration times for high horsepower cars, and most of the high horsepower cars were heavy, the group mean for heavy is likely to increase.
+
+If we subtract 1.47 from all acceleration times for low horsepower cars, and most of the low horsepower cars were light, the group mean for light is likely to decrease. 
+
+16. Record the adjusted mean acceleration for each group:
+```{r}
+high = high %>% mutate(adj.accel = acceleration + 1.47)
+low = low %>% mutate(adj.accel = acceleration - 1.47)
+cars.adj2 = rbind(high,low)
+light2 = cars.adj2 %>% filter(weight == "light")
+heavy2 = cars.adj2 %>% filter(weight == "heavy")
+mulight2 = mean(light2$adj.accel)
+muheavy2 = mean(heavy2$adj.accel)
+```
+Horsepower-adjusted mean acceleration for light cars: 15.02
+
+Horsepower-adjusted mean acceleration for heavy cars: 15.62
+
+The means changed as predicted in question 15.
+
+17.  The horsepower-adjusted weight effect is 0.5767.
+
+18.  The horsepower-adjusted weight effect is larger than the unadjusted effect and they are different signs.
+
+19. Show the ANOVA table:
+```{r}
+model3 <- lm(adj.accel~horsepower+weight, data = cars.adj2)
+anova(model3)
+## I am not sure why the anova table isn't giving the correct values
+## for horsepower so I also included the one from the applet.
+```
+
+![](C:/Users/Samantha Chinn/Desktop/anova.PNG)
+
+20.  The SSweight is 67.14. This value is much lower than the SSweight before adjusting for horsepower.
+
+21.  The proportion of variation in acceleration explained by weight after adjusting for horsepower is approximately 2%. This is smaller than the proportion of variation in acceleration that was explained by weight before adjusting for horsepower (it was around 7%). We could have predicted this when we acknowledged the large F-Statistics and that there was a significant relationship between both weight and acceleration and horsepower and acceleration.
+
+22.  There still is a significant association between acceleration and weight as our F-Statistic is large, however weight has the smallest F-Statistic and largest p-value meaning it is not the most significant.
+
+23.  Two-variable statistical model:
+
+* $i$ = horsepower; 1 if high; 2 if low
+* $j$ = weight; 1 if heavy; 2 if light
+* $k$ = observation
+
+* $y_{ijk}$ = acceleration of car i, j, k
+
+Assumptions:
+
+* $\epsilon_{ijk}$ $\approx$ iid N(0,$\sigma$)
+* $\alpha_1$+$\alpha_2$=0
+* $\beta_1$+$\beta_2$=0
+
+$y_{ijk}$ = $\mu + \alpha_i + \beta_j + \epsilon_{ijk}$
+
+$y_{ijk}$ = $15.26 + 1.87*\alpha_i + 0.5765*\beta_j + \epsilon_{ijk}$
+
+24.  $adj SSweight$ + $adj SShorsepower$ does not equal $SSmodel$ because we have not considered the variation that will be explained by weight and horsepower changing together, the covariation.

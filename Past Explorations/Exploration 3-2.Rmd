@@ -1,0 +1,365 @@
+---
+title: "Exploration 3.2: Optimizing Ads"
+author: "Samantha Chinn"
+date: "2/29/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, results = "show", fig.show = "show")
+library(tidyverse)
+ad.data = read.table("http://www.isi-stats.com/isi2/data/ad_data.txt", header=TRUE)
+#ad.data %>% write_csv("ad.data.csv")
+```
+
+1. The experimental units are men and women recruited from a Midwestern shopping center. There are 88 experimental units in total, 44 women and 44 men. The explanatory variables in this study were claim type (2 levels - concrete or abstract) and type of imagery (2 levels - primarily visual or primarily verbal).
+
+2. Sources of Variation Diagram:
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+consumer response rating |type of claim                    |gender
+                         |type of imagery                  |age
+-------------------------|                                 |how long they have been drinking        
+Inclusion Criteria:      |                                 |
+Midwestern               |                                 |
+"Beer drinkers"          |                                 |
+-------------------------|                                 |
+Design:                  |                                 |
+No control ad            |                                 |
+
+3. The four possible treatments are:
+
+* concrete language with visual ad
+* concrete language with verbal ad
+* abstract language with visual ad
+* abstract language with verbal ad
+
+With 88 participants in total, 22 were assigned to each treatment. The assignment should be done randomly to eliminate possibility of confounding variables.
+
+4. Find the four treatment means:
+```{r}
+gr.means=ad.data%>%group_by(claim,imagery)%>%summarize(mean.rating=mean(rating))
+gr.means
+```
+
+```{r include = FALSE}
+# Concrete Visual Mean
+ad.data %>% filter(claim == "Concrete") %>% filter(imagery == "Visual") -> ConcVis
+mean.ConcVis = mean(ConcVis$rating)
+# Concrete Verbal Mean
+ad.data %>% filter(claim == "Concrete") %>% filter(imagery == "Verbal") -> ConcVer
+mean.ConcVer = mean(ConcVer$rating)
+# Abstract Visual Mean
+ad.data %>% filter(claim == "Abstract") %>% filter(imagery == "Visual") -> AbsVis
+mean.AbsVis = mean(AbsVis$rating)
+# Abstract Verbal Mean
+ad.data %>% filter(claim == "Abstract") %>% filter(imagery == "Verbal") -> AbsVer
+mean.AbsVer = mean(AbsVer$rating)
+```
+Find the row and column means:
+```{r}
+row.means = ad.data %>% group_by(claim) %>% summarize(mean.rating=mean(rating))
+row.means
+col.means = ad.data %>% group_by(imagery) %>% summarize(mean.rating=mean(rating))
+col.means
+```
+```{r include = FALSE}
+# Mean Concrete
+ad.data %>% filter(claim == "Concrete") -> Concrete
+mean.Conc = mean(Concrete$rating)
+# Mean Abstract
+ad.data %>% filter(claim == "Abstract") -> Abstract
+mean.Abs = mean(Abstract$rating)
+# Mean Visual
+ad.data %>% filter(imagery == "Visual") -> Visual
+mean.Visual = mean(Visual$rating)
+# Mean Verbal
+ad.data %>% filter(imagery == "Verbal") -> Verbal
+mean.Verbal = mean(Verbal$rating)
+```
+Find the overall mean:
+```{r}
+contrasts(ad.data$claim)=contr.sum
+contrasts(ad.data$imagery)=contr.sum
+#levels(ad.data$claim)
+#levels(ad.data$imagery)
+Mean = mean(ad.data$rating)
+Mean
+```
+
+5. Calculate the claim effects:
+```{r}
+# Abstract Effect
+aAbs = mean.Abs - Mean
+# Concrete Effect
+aConc = mean.Conc - Mean
+```
+Calculate the imagery effects:
+```{r}
+# Verbal Effect
+aVer = mean.Verbal - Mean
+# Visual Effect
+aVis = mean.Visual - Mean
+```
+Prediction equation:
+
+* $i$ = Type of claim (1 for Abstract, 2 for Concrete)
+* $j$ = Type of imagery (1 for Verbal, 2 for Visual)
+
+Predicted rating = $\hat{\mu} + \hat{\alpha_i} + \hat{\beta_j} + \epsilon_{ij}$
+
+6. The predicted values for each treatment using the prediction equation:
+
+Predicted outcome for Concrete-Visual
+```{r}
+pred.C.vis = Mean + aConc + aVis
+pred.C.vis
+```
+Predicted outcome for Concrete-Verbal
+```{r}
+pred.C.ver= Mean + aConc + aVer
+pred.C.ver
+```
+Predicted outcome for Abstract-Visual
+```{r}
+pred.A.vis = Mean + aAbs + aVis
+pred.A.vis
+```
+Predicted outcome for Abstract-Verbal
+```{r}
+pred.A.ver = Mean + aAbs + aVer
+pred.A.ver
+```
+
+7. Create an interaction plot for the predicted means:
+```{r include=FALSE}
+# Headers for claim and imagery
+claim <- c('Concrete', 'Concrete','Abstract','Abstract')
+imagery <- c('Visual', 'Verbal', 'Visual', 'Verbal')
+mean.rating <- c(mean.ConcVis, mean.ConcVer, mean.AbsVis, mean.AbsVer)
+pred.gr.means <- data.frame(claim,imagery,mean.rating)
+```
+```{r}
+# Create an interaction plot
+pred.gr.means %>% ggplot(aes(x=imagery,y=mean.rating,color=claim))+
+  geom_line(aes(group=claim))+geom_point() +
+  labs(x="Imagery",y="Mean Rating")
+```
+
+8. The plots of observed and predicted values look pretty similar. Both show that the claim effect on verbal imagery is smaller than that on visual imagery. This is evident in the small difference between claim types on the verbal side and a larger difference between claim types on the visual side. One key visual difference to note is that overall means by claim seem further apart on the predicted graph than they do on the observed graph.
+
+9. The differences between observed and predicted means:
+
+Abstract-Verbal:
+```{r}
+mean.AbsVer - pred.A.ver
+```
+Abstract-Visual:
+```{r}
+mean.AbsVis - pred.A.vis
+```
+Concrete-Verbal:
+```{r}
+mean.ConcVer - pred.C.ver
+```
+Concrete-Visual:
+```{r}
+mean.ConcVis - pred.C.vis
+```
+
+10. Ideally, we would like the values above to be close to 0. This would mean that our prediction equation calculates values close to what we observed.
+
+# Approach #1. One-Variable Analysis
+
+```{r}
+ad.data %>% group_by(claim, imagery) %>% summarize(gr.means = mean(rating), sd.ratings = sd(rating)) %>% mutate(treatments = paste(claim, imagery))
+ad.data %>% mutate(treatments = paste(claim, imagery)) -> ad.data
+model1 <- lm(rating~treatments,data = ad.data)
+anova(model1)
+```
+
+11. The null hypothesis for this model:
+
+$H_0$ : $\mu_{11}=\mu_{12}=\mu_{21}=\mu_{22}$
+
+The proportion of total variation that is explained in this model is:
+```{r}
+122.67/(122.67+273.32)
+```
+
+# Approach #2. Two-Variable Analysis
+
+```{r}
+model2 <- lm(rating~claim+imagery,data = ad.data)
+anova(model2)
+```
+
+12. A two-variable model estimates the treatment effects for each variable and separates the two sources of variation. This is advantageous to the one-variable model because we can draw conclusions about each individual variable rather than just the differences of treatments.
+
+13. The small p-value tells us to reject our null-hypothesis. We conclude that there is an effect on rating due to claim and imagery.
+
+14. Proportion of variation explained by each variable:
+```{r}
+48.01/395.99
+```
+The proportion of total variation in ratings explained by claim is 0.12.
+```{r}
+45.10/395.99
+```
+The proportion of total variation in ratings explained by imagery is 0.11.
+
+The null hypothesis for the p-value for claim is $H_0$ : $\alpha_1 = \alpha_2$. 
+
+The null hypothesis for the p-value for imagery is $H_0$ : $\beta_1 = \beta_2$.
+
+15. The proportion of the total variation in ratings that is explained by this model ($R^2$) is:
+```{r}
+1-(302.88/395.99)
+```
+This proportion of explained variation is less than what we saw with the separate means model of Approach #1. 
+
+The overall model (both variables together) is statistically significant as shown through the small p-value in the ANOVA table for 'model'.
+
+16. Update the Sources of Variation diagram to include interaction:
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+consumer response rating |type of claim                    |gender
+                         |type of imagery                  |age
+-------------------------|interaction between claim and    |how long they have been drinking      
+Inclusion Criteria:      |  imagery                        |
+Midwestern               |                                 |
+"Beer drinkers"          |                                 |
+                         |                                 |
+-------------------------|                                 |
+Design:                  |                                 |
+No control ad            |                                 |
+
+17. The hypothetical interaction plot does indicate an effect due to claim type. The overall mean for concrete claims is much higher than that of abstract claims.
+
+18. The plot does indicate an effect due to imagery type. When just considering abstract claims, the values for visual imagery were higher than those for verbal imagery. Similarly, when just considering concrete claims, the values for visual were also higher than verbal. The overall mean for visual is higher than that of verbal.
+
+19. There is a difference between concrete and abstract for verbal imagery and then concrete and abstract for visual imagery. However, these differences appear to be the same, meaning the claim effect for the verbal ads and visual ads is the same. 
+
+20. In the new hypothetical interaction plot there is no claim effect because the average ratings for abstract and concrete are the same. There also is no imagery effect because the average ratings for verbal and visual are the same. However, there is an interaction because the size of the difference between concrete and abstract claims for visual imagery is much larger than that for verbal imagery.
+
+21. Write the null and alternative hypotheses:
+
+$H_0$: There is no interaction between claim and imagery in the underlying process.
+
+$H_a$: There is an interaction between claim and imagery in the underlying process.
+
+$H_0$: The effect of claim on the Rating is the same regardless of imagery.
+
+$H_a$: The effect of claim on the Rating is not the same based on imagery.
+
+22. In order to decide whether the interaction effect is statistically significant we would want to analyze the difference of differences. This statistic measures the strength of the interaction observed in the data. In order to simulate the distribution under $H_0$ we need to shuffle the data:
+```{r}
+ad.data.fac<-ad.data %>% mutate(ratingf=as.factor(rating))
+contrasts(ad.data.fac$claim)=contr.sum
+contrasts(ad.data.fac$imagery)=contr.sum
+M=1000
+stats.df = data.frame(rep=seq(1,M),stat=NA)
+for(i in 1:M){
+  ad.data.shuf=ad.data.fac
+  ad.data.shuf$claimshuf=sample(ad.data.shuf$claim)
+  ad.data.shuf$imagshuf=sample(ad.data.shuf$imagery)
+  gr.shuf=ad.data.shuf%>%group_by(claimshuf,imagshuf)%>%
+    summarize(mean.rating=mean(rating))
+  stats.df[i,]$stat=(gr.shuf$mean.rating[1]-gr.shuf$mean.rating[2]-
+                       (gr.shuf$mean.rating[3]-gr.shuf$mean.rating[4]))
+}
+```
+This shuffled data will let us see if the statistic is significant. We can evaluate the strength of evidence by finding the p-value. 
+
+23. For verbal ads the difference in mean ratings is:
+```{r}
+diff1=mean.ConcVer-mean.AbsVer
+diff1
+```
+For visual ads the difference in mean ratings is:
+```{r}
+diff2=mean.ConcVis-mean.AbsVis
+diff2
+```
+These two values are not the same. The difference of the differences is:
+```{r}
+diff1-diff2
+```
+
+24. The value of the difference of the differences measures the potential presence of an interaction between the data by evaluating the impact of a variable within each group of the second variable separately and then seeing how those impacts are across different groups. If there were no interaction, then the difference would be zero. However, because there is an interaction, we do not get 0 as shown above.
+
+25. The value above tells us that there is an interaction present. However, plot 3.2.18 shows no interaction. The value above most likely would fit with a graph similar to that in 3.2.19. For plot 3.2.18 the value of the difference of the differences would be the same for verbal and visual imagery. In plot 3.2.19 the difference for visual is greater than that of verbal.
+
+26. The value of the difference of the differences seems to be smaller for the re-randomized data compared to the original data.
+
+27. Sketch a graph of the re-randomized distribution of the difference of differences statistic:
+```{r}
+stats.df %>% ggplot(aes(x=stat)) + geom_histogram() + geom_vline(xintercept = -2.3,color="red",lwd=2) +
+  geom_vline(xintercept = 2.3,color="red",lwd=2)
+```
+
+28. Decide whether the observed difference in the differences is statistically significant.
+```{r}
+stats.df %>% filter(abs(stat)>2.3) %>% summarize(perc=n()/M)
+```
+Our p-value is two sided and small, 0.009. This means that we reject our null-hypothesis stating that there is no interaction present. It is necessary for us to include an additional term in our model that accounts for this interaction at various claim and imagery combinations in order to accurately predict a consumer's rating.
+
+29. Calculate the interaction effects:
+```{r}
+#Concrete-Visual
+aB.11 = mean.ConcVis - pred.C.vis
+#Concrete-Verbal
+aB.12 = mean.ConcVer - pred.C.ver
+#Abstract-Visual
+aB.21 = mean.AbsVis - pred.A.vis
+#Abstract-Verbal
+aB.22 = mean.AbsVer - pred.A.ver
+```
+
+30. New prediction equation:
+
+* $i$ = Type of claim (1 for Concrete, 2 for Abstract)
+* $j$ = Type of imagery (1 for Visual, 2 for Verbal)
+
+Predicted rating = $\mu$ + $\alpha_i$ + $\beta_j$ + $\alpha\beta_{ij} + \epsilon_{ijk}$
+
+Predicted values (with interaction):
+```{r}
+Abstract.Verbal = Mean + aAbs + aVer + aB.22
+Abstract.Visual = Mean + aAbs + aVis + aB.21
+Concrete.Verbal = Mean + aConc + aVer + aB.12
+Concrete.Visual = Mean + aConc + aVis + aB.11
+```
+
+31. ANOVA table:
+```{r}
+model2 <- lm(rating~claim+imagery+claim:imagery,data=ad.data)
+anova(model2)
+```
+The SS for the interaction effects is 29.56. The percentage of variation explained by the interaction term is 7%. It is statistically significant, as evident by the small p-value and F-Statistic of 9.08. However, it is not as statistically significant as imagery and claim independently.
+
+32. The weighted sum of squares for the interaction effects:
+```{r}
+SSI.weighted = 22*(aB.11^2+aB.12^2+aB.21^2+aB.22^2)
+```
+This is equal to the SSInteraction from the ANOVA table above, 29.557.
+
+33. 
+```{r}
+#stats.df = ad.data %>% mutate(shuff.claim = sample(claim), shuff.img = sample(imagery))
+#shuff.lm = lm(rating~shuff.claim*shuff.img,data=stats.df)
+#Fstat = anova(shuff.lm)[3,4]
+#stats.df %>% filter(stat > Fstat) %>% summarise(perc=n()/M)
+
+Fstat = anova(model2)[3,4]
+stats.df %>% filter(stat>Fstat) %>% summarise(perc=n()/M)
+```
+The estimated p-value is 0 which is not surprising. The theory based p-value does adequately approximate the simulation-based p-value.
+
+34. The distribution of the residuals appears symmetric. On the graph of the residuals vs. the predicted values it appears that the residuals are equally spread for each fitted value.
+
+35. Based on the confidence intervals, ConcreteVerbal-AbstractVisual, ConcreteVerbal-AbstractVerbal, AbstractVisual-AbstractVerbal all contain 0 which means we cannot conclude that there is a difference.
+
+36. Overall this study provided insight into the relationship between claim type, imagery type, and consumer rating. We observed an effect due to claim type, an effect due to imagery type, and an interaction between both claim and imagery. We were able to come up with a prediction equation that estimated our values from the data by adding a term in the model that accounted for the interactions. Our estimations, in the form of confidence intervals, show that the 3 group comparisons listed above have no difference. Our conclusions from this study are generalizable to the population of beer consumers in the midwestern store. Because this study was an experiment with varying treatments we can conclude causation from our results.

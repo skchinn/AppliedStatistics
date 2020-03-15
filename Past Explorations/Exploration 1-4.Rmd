@@ -1,0 +1,173 @@
+---
+title: "Exploration 1.4: Golden Squirrels"
+author: "Samantha Chinn"
+date: "2/4/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,results="show",fig.show="show")
+library(tidyverse)
+library(readxl)
+squirrels <- read_excel("C:/Users/Samantha Chinn/OneDrive - West Point/MA376 - Applied Stats/squirrels.xlsx")
+mean = mean(squirrels$Length)
+```
+
+1. Do golden mantled squirrels from cooler climates tend to be larger than those from warmer climates? Other sources of variation may include the age of the squirrel, genetic factors, or the gender of the squirrel.
+
+2. The observational units are the 18 golden mantled squirrels measured from the four California locations. The response variable is the length in mm of the squirrel. The explanatory variable is the average temperature of the squirrel's location. The explanatory variable is categorical, the levels are representative of each location's  average temperature. The response variable is quantitative.
+
+3. This was an observational study because the observational units were not subjected to various treatments, no variables were manipulated by the experimenter.
+
+4. The inclusion criteria for this study is that the observational unit must be a golden mantled squirrel and it must be from one of the four locations selected.
+
+5. Sources of Variation diagram for this study:
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+length of golden mantled |origin location                  |age
+squirrels                |                                 |genetic factors
+-------------------------|                                 |gender                          
+Inclusion Criteria:      |                                 |
+golden mantled squirrel  |                                 |
+California origin        |                                 |
+
+6. The overall mean length was 263.167 mm and the standard deviation was 13.583 mm. The SSTotal for these data is 3136.5.
+
+7. 
+```{r}
+ggplot(squirrels, aes(Length, Location)) + 
+  geom_jitter(height = 0.1) + 
+  labs(x = "Length of Golden Mantled Squirrel (mm)", y = "Location", 
+       title = "Length of Golden Mantled Squirrel grouped by Location")
+```
+
+It does appear that location explains some variation in squirrel lengths. The plot above shows how each group's distribution of lengths vary. The squirrels in Loophill had a mean length of 280.75 mm and standard deviation of 7.59 mm. In Susanville the mean length was 262.20 mm and standard deviation of 10.89 mm. In Big Bear the mean length was 260.75 mm and standard deviation of 10.75. In Hemet the mean length was 252 mm and standard deviation of 7.97 mm. 
+
+8. A "separate locations" model would be:
+
+* $i$ = 1 if in Loophill, 2 if in Susanville, 3 if in Big Bear, 4 if in Hemet
+* $j$ = squirrel
+* $y_{ij}$ = length of squirrel (mm) $i$,$j$
+* $\mu_1$ = average length for a squirrel in Loophill = $280.75$
+* $\mu_2$ = average length for a squirrel in Susanville = $262.20$
+* $\mu_3$ = average length for a squirrel in Big Bear = $260.75$
+* $\mu_4$ = average length for a squirrel in Hemet = $252.00$
+* SE of residuals = $9.44$
+
+Predicted Length = $y_{ij}$ = $\mu_i +\epsilon_{ij}$
+
+SE Residuals for Separate Locations Model = $9.44$
+
+
+9. The $R^2$ for these data is 0.602. This means that our "separate locations" model accounts for $\approx$ 60.2% of the variation in squirrel length. 
+
+10. 
+```{r}
+mu1=280.75
+mu2=262.2
+mu3=260.75
+mu4=252
+mu1-mu4  ### further than one residual SE ###
+mu1-mu2  ### further than one residual SE ###
+mu1-mu3  ### further than one residual SE ###
+mu2-mu3
+mu3-mu4
+```
+The group pairs of Susanville, Hemet, and Big Bear, when paired with Loophill, are all more than one residual standard error apart.
+
+11. I consider the differences in group means mentioned above in question 10, along with our large $R^2$ value of .602 to be practically significant. It is practically significant that 60.2% of the variation in our response variable is explained by the model when considering the groupings of the squirrels by their location.
+
+12. The null hypothesis is that there is no association between location and squirrel length (mm). 
+
+The alternative hypothesis is that there is an association between location and squirrel length (mm).
+
+13. The statistic we could use to summarize the differences among the four groups is the $R^2$ statistic.
+
+$R^2 = 1-(SSE/SST)$
+
+14. The null distribution of the $R^2$ statistic is right skewed. This shape makes sense because the area to the right of our $R^2$ value of 0.602, the p-value, is very small. This means that there is a very small amount of values as extreme or more extreme than those we found, in this case it would be chances that another model will have a greater $R^2$ value than 0.602.
+
+15. The observed $R^2$ statistic was 0.602. The p-value was 0.004 meaning that 0.4% of the observations will have $R^2$ values that are as extreme or more extreme than the one we observed from the actual study. Because our p-value is so small we reject our null hypothesis that stated there is no association between location and length of squirrels. 
+
+16. After duplicating the data 4 times, the means for each group stayed the same, but the standard deviations decreased. The $R^2$ statistic remained the same.
+
+Location Group           | Original Data                       | Duplicated Data
+-------------------------|-------------------------------------|------------------------------------
+                         |Mean            |Standard Deviation  |Mean            |Standard Deviation 
+Loophill                 |280.75          |7.59                |280.75          |6.79
+Susanville               |262.20          |10.89               |262.20          |10.00
+Big Bear                 |260.75          |10.75               |260.75          |9.62                   
+Hemet                    |252.00          |7.97                |252.00          |7.31
+
+17. The p-value is now 0 after shuffling the new data. This makes sense because our $R^2$ value remained at 0.602, but because we increased the sample size, the distribution narrowed. This narrowing pulled the values closer to zero and further from 0.602. In doing this, there is approximately no area under the curve that is more extreme than the $R^2$ value of 0.602.
+
+18. The F-Statistic for the duplicated data is 34.286 and the approximate p-value is 0.00.
+
+19. The F-Statistic for the original data is 7.059. 
+```{r}
+R2 = 0.602
+F.stat = (R2/(1-R2))*(14/3)
+print(F.stat)
+```
+
+20. The F-Statistic for the original data is much smaller than that of the copied data set. This makes sense because the numerator of the second quantity, $\frac{n-number of groups}{number of groups - 1}$ will be larger with a data set that has more observations. In the case of the copied data set, we had more observations (n) so the numerator of $n-4$ was larger than with the original data set.
+
+The p-value for the original data set was larger than the copied data set. This makes sense because the probability of having an F-statistic more extreme than 7.059 is greater than having an F-statistic larger than 34.286.
+
+21. The samples are independent from each other because the location and length of one squirrel is not expected to affect that of another squirrel.
+
+22. The standard deviations of the treatment groups are similar with the largest not being more than twice the size of the smallest.
+
+23. The distributions of the treatment groups appear to be approximately symmetric. There is no extreme skewness or blatant outliers. However, the small group sizes is somewhat concerning.
+
+24. The theoretical F-distribution does a good job at approximating the shuffled null.
+
+25. Because we had such a small p-value, we reject our null hypothesis that said there is no association between location and length of the squirrel. 
+
+26. There is significant evidence to suggest that there is an association between a golden mantled squirrel's location and its length. Our $R^2$ value means the our grouped model explains 60.2% of the variation in squirrel length. The F-statistic is a measure of the explained variance to the unexplained variance - we want a large number for this. Our model had high F-statistics, both the original data set and the copied one which means that our model explained a larger amount of variance than that which was left unexplained. 
+
+Our model only looked at golden mantled squirrels in the locations of Loophill, Susanville, Big Bear, and Hemet. The conclusions we draw from this study may be generalized to other golden mantled squirrels in these areas, but cannot be generalized to other species in different locations. 
+
+We cannot conlude causation based on our observations because this was an observational study and not an experiment. There may be confounding variables that also affected the length of squirrels in these areas that we did not look into. For this reason, we can conclude that there is an association between squirrel location and length, but not that length is directly affected by location.
+
+Bergmann's rule states that within a species, specimens will be larger on average if they are from cooler climates or more extreme latitude. Our data observed that there is an association between location and length, but did not determine if increased length is associated with cooler climates, so we cannot confirm Bergmann's rule.
+
+27. If I were to conduct a follow-up study I would like to look at possible confounding variables such as gender and age. I would also like to look at the temperatures and varying climates to see if increased length is associated with warmer or colder climates.
+
+28. Chart shown below depicts degrees of freedoms and SS:
+
+Source of Variation  | df        | SS
+---------------------|-----------|----------
+Location             |14         |1888.2
+Error                |3          |1248.3
+---------------------|-----------|----------
+Total                |17         |3136.5
+
+29. 
+
+(a) $dfTotal = dfError + dfLocation$ where $dfError = number of groups - 1 = 4 - 1$ and $dfLocation = sum of (group size -1) = (4 - 1) + (5 - 1) + (4 - 1) + (5 - 1)$.
+
+(b) 
+```{r}
+a1 = mu1-mean
+a2 = mu2-mean
+a3 = mu3-mean
+a4 = mu4-mean
+
+SSM = (4*a1^2)+(5*a2^2)+(4*a3^2)+(5*a4^2)
+print(SSM)
+```
+
+(c)
+
+$1888.20/3 = 629.40$ which is the MS value given for the Model.
+
+$1248.30/14 = 89.16$ which is the MS value given for the Error.
+
+(d)
+
+$\sqrt{89.16}$ = 9.44 which is the residual value for the separate locations (separate means) model.
+
+30. $MStreatment/MSerror = 629.40/89.16 = 7.059$ which is the F-Statistic for the original data.
+

@@ -1,0 +1,143 @@
+---
+title: "Exploration 1.2: Starry Navigation"
+author: "Samantha Chinn"
+date: "1/24/2020"
+geometry: margin=2cm
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,results="hide",fig.show="hide")
+library(tidyverse)
+Dung.data<-read.table("http://www.isi-stats.com/isi2/data/DungBeetles.txt",  header=TRUE)
+```
+1.  Can dung beetles navigate without the moon, using just the stars?
+
+2.  This is an experiment because the researcher is manipulating the explanatory variable. The response variable is how long it takes the dung beetle to reach the edge. The explanatory variable is the type of cap the beetle had. The treatment groups were, 1) wearing the transparent cap or 2) wearing the black cardboard cap.
+
+3. All beetles were given a cap to ensure that weight of the cap or a new feeling of having the cap on was not a confounding variable.
+
+4.  I do believe that obscuring the beetles' vision does play a role in increasing the difficulty to move in a direct line. However, I also believe that how old the beetle is along with its gender may have an effect.
+
+5.  A Single Mean Model for this experiment would be:
+
+* $i$ = dung beetle
+* $y_i$ = time for beetle $i$ 
+* $y_i$ = $\mu$ + $\epsilon_i$
+
+\begin{align*}
+y_i &= 84.66 + \epsilon_i\\
+\epsilon_i & \sim F(0,46.9)
+\end{align*}
+
+6.  Verify that the following matches the SST given by the applet.
+
+```{r}
+SD.times = 46.93
+(18-1)*SD.times^2
+```
+The calculated value of 37441.22 is very close to our SSTotal of 37441.61.
+
+7.  Visually, the type of cap does appear to explain at least some of the variation in the times because the times for the beetles wearing the clear cap is noticeably lower than those that wore the black cap.
+
+8.  A Separate Means model for this data:
+
+* $i$ = 1 if wearing clear cap, 2 if wearing black cap
+* $j$ = beetle
+* $y_ij$ = time for beetle $i$,$j$
+* $\mu_1$ = average time for a beetle in the clear cap = $42.78$
+* $\mu_2$ = average time for a beetle in the black cap = $126.55$
+* SE of residuals = $19.146$
+
+\begin{align*}
+y_ij &= \mu_i + \epsilon_ij\\
+\end{align*}
+
+The standard error of the residuals for the "cap model" is much lower than that of the single mean model. This means that there is less variation remaining in the response variable after the conditioning through the "cap model". The standard error of the residuals for the single mean model was very large meaning that there was much more variation left over.
+
+9.  Verify that the following is approximately the same value given by the applet.
+
+```{r}
+SE.resid = 19.146
+SSE = (18-2)*(SE.resid)^2
+print(SSE)
+```
+The value given by the applet of 5864.93 is very close to the value calculated above.
+
+10.  Calculate the cap effect and the "no cap" effect:
+```{r}
+Dung.data %>%
+  group_by(treatment) %>% 
+  summarize(mean=mean(time)) %>%
+  mutate(effect = mean(Dung.data$time) - mean)
+```
+The effect of the black cap is -41.88389 and the effect of the clear cap ("no cap") is 41.88389.
+
+11.  Using the overall mean and the treatment effects we can now write the model as:
+
+Now we know that the effects are...
+
+```{r}
+a1 = 41.88398
+a2 = -41.88398
+```
+
+\begin{align*}
+i & = \mbox{treatment cap}\\
+j & = \mbox{beetle}\\
+y_{i,j}& = \mbox{amount of time }j\mbox{th observation exposed to the }i\mbox{th treatment cap}\\
+y_{i,j} & = 84.66 + \alpha_i + \epsilon_{i,j}\\
+\epsilon_{i,j} &\sim F(0,19.15)
+\end{align*}
+
+12.  The SSModel for these data is:
+```{r}
+SSM = 9*(a1*a1) + 9*(a2*a2)
+print(SSM)
+```
+
+
+13. Verify that SSTotal = SSModel + SSError and that df total = df model + df error:
+```{r}
+SST = 37441.61
+SST.verify = SSM+SSE
+print(SST.verify)
+```
+The given value of SSTotal, 37441.61 is very close to the calculated value above, 37441.93.
+
+df model = 1
+
+df error = 18 - 2 = 16
+
+df total = 18 - 1 = 17
+
+16 + 1 = 17 = df total
+
+14.  The percentage of variation explained for these data:
+```{r}
+(1-(SSE/SST))*100
+```
+84.3% of the variation is explained for these data.
+
+15. With an $R^2$ value of 0.843 we know that 84.3% of the total variation in the time (in seconds) it takes for the beetle to move in the straight line is explained by the source of interest in the model, the type of treatment cap the beetle was assigned.
+
+16. 
+
+![Applet Pie Chart](C:/Users/Samantha Chinn/OneDrive - West Point/MA376 - Applied Stats/newplot.png)
+
+17.  Assessing practical significance:
+```{r}
+mu.clear = 42.78
+mu.black = 126.55
+
+mu.diff = mu.black - mu.clear
+mu.diff/SE.resid
+```
+The difference in treatment means divided by the standard error of the residuals is larger than 1.
+
+18. I believe that the difference in times is impressive, most notably shown through our answer from problem 17. Because the difference in treatment means divided by the standard error of the residuals is larger than 1, I believe that the results of the treatment are noteworthy. However, I do believe that there may be confounding variables such as gender and age of the beetle. 
+
+19.  If I were to conduct a follow-up study I would create multiple groups of beetles, organized by age and gender and then assign treatments.
+
+
+

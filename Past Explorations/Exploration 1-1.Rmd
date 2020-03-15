@@ -1,0 +1,161 @@
+---
+title: "Exploration 1.1: Memorizing Letters"
+author: "Samantha Chinn"
+date: "1/18/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, results = "show", fig.show = "show")
+library(tidyverse)
+library(readxl)
+MemLett <- read_excel("MemorizingLetters.xlsx")
+#View(MemLett)
+```
+1. The research question we are trying to answer is "Is it easier to memorize a sequence of letters based on the order they are presented in?"
+
+2. The response variable is the number of letters the person is able to memorize after 20 seconds and write down (in order). The response variable is quantitative (letters remembered).
+
+3. This was an experiment because there were two treatment groups. One group received letter in order of words they have likely seen before, the other group had the letters all shuffled up. 
+
+4. The experimental units are the 21 students enrolled in MA376 at West Point in the year 2020. 
+
+5. The treatment variable is the order the letters were presented in. There were two levels A) presented in recognizable order or B) shuffled up.
+
+6. I would use random assignment to determine which experimental unit receives which treatment. In using random assignment I hope to decrease the chances of my results being affected by confounding variables by making the two treatment Groups as similar as possible in every other way, thus allowing me to draw conclusions between my treatment and response variables.
+
+7. To make sure the treatment groups were equally balanced, the papers with the letters on them were shuffled so that the person passing them out did not know which treatment they were subjecting the experimental unit to. Additionally, the experimental units were not told that there were two different treatment levels.
+
+8. This study was double blind because the experimenter did not know which treatment they were assigining to whom and the experimental unit was unaware of the different levels.
+
+9. The sample was not randomly selected to participate in the study. Because of this, the results and conclusions generated from this experiment cannot be generalized to a larger population and can only be applied to students in MA376 for AY20-2.
+
+10. This experiment had a few pieces of inclusion criteria. Those were, currently being enrolled in MA376 and enrolled during the term AY20-2.
+
+11. Numerical summary of outcomes of response variable:
+```{r}
+MemLett %>% select(`Number Correct`) %>%
+  summary(MemLett)
+sd(MemLett$`Number Correct`)
+```
+Graphical summary of the outcomes of response variable:
+```{r}
+hist(x=MemLett$`Number Correct`,data=MemLett,xlab="Number Correct")
+```
+From the numerical and graphical displays of the outcomes of the response variable we see that the average number of letters correct was 14 letters. The minimum and maximum were 2 and 29 and the data had one outlier.
+
+12. A Single Mean model for this data would be:
+
+* $i$ = student
+* $y_i$ = number correct of student $i$ 
+* $y_i$ = $\mu$ + $\epsilon_i$
+
+\begin{align*}
+y_i &= 13.81 + \epsilon_i\\
+\epsilon_i & \sim F(0,5.93)
+\end{align*}
+
+```{r}
+number.model = lm(`Number Correct`~0, data = MemLett)
+summary(number.model)
+```
+13. Numerical summary of the response variable based on treatment group:
+``` {r}
+# Numerical summary of treatment and response variable.
+MemLett %>% group_by(Group) %>%
+  summarize(mean=mean(`Number Correct`), StDev=sd(`Number Correct`), 
+            Minimum=min(`Number Correct`), Median=median(`Number Correct`), 
+            Maximum=max(`Number Correct`))
+```
+Graphical summary of response variable based on treatment group:
+```{r}
+# Graphical summary of treatment and response variable.
+ggplot(MemLett,aes(y = MemLett$`Number Correct`, x = MemLett$Group)) + geom_boxplot() + 
+  coord_flip() + labs (x="Number Correct", y="Treatment Group",
+        title="Number of Letters Correct Grouped by Treatment")
+```
+The numerical and graphical summaries of the treatment and response variable show that, on average, it appears experimental units in Group A tended to score higher than those in Group B. This makes sense because those in Group A were given their letters in a recognizable sequence, while those in Group B received theirs in a shuffled order. Comparing the group means, Group A had a mean of 17.7 while Group B only had a mean of 10.3. Comparing the standard deviation of each individual group, Group A had more variable results with a standard deviation of 5.96 while Group B had a standard deviation of 3.95. Group A had one singular outlier that fell below their group's scores. Group B had 3 outliers, two of which were unusually high scorers.
+
+14. A Separate Means model for this data:
+
+* $i$ = 1 if in Group A, 2 if in Group B
+* $j$ = student
+* $y_{ij}$ = number correct of student $i$,$j$
+* $\mu_1$ = average number correct for a student in Group A = $17.7$
+* $\mu_2$ = average number correct for a student in Group B = $10.3$
+* SE of residuals = $4.67$
+
+\begin{align*}
+y_{ij} &= \mu_i + \epsilon_{ij}\\
+\end{align*}
+
+```{r}
+# We already have each group's mean and standard deviation from #13.
+group.model = lm(`Number Correct` ~ 0 + Group, data = MemLett)
+summary(group.model)
+```
+
+15. The SE of the residuals is much smaller for the Separate Means model than the Single Means model. The SE for the Single Mean model was 14.97. The SE for the Separate Means model was 4.67. 
+
+16. Only knowing the treatment group each person was assigned to does not explain all of the variation in the response. Because the SE of the residuals for our Separate Means model was 4.67 it means that there is still that much variation left in the responses.
+
+17. Sources of Variation diagram for Separate Means Model (referred to the RMarkdown Cheat Sheet on how to make this table):
+
+Observed Variation in:   | Sources of explained variation  | Sources of unexplained variation
+-------------------------|---------------------------------|---------------------------------
+number of letters correct|treatment group (A or B)         |amount of sleep
+                         |                                 |caffeine consumption (Y or N)
+-------------------------|                                 |                                
+Inclusion Criteria:      |                                 |
+student in MA376 AY20-2  |                                 |
+                         |                                 |
+Design:                  |                                 |
+time memorizing          |                                 |
+time to write down       |                                 |
+
+18. Explore the affect of amount of sleep:
+```{r}
+AB.sleep = MemLett %>% select(Group, Sleep)
+ggplot(AB.sleep, aes(y=AB.sleep$Sleep, x=AB.sleep$Group, fill = AB.sleep$Group))+ 
+  geom_boxplot() +coord_flip() + labs(x = "Treatment Group", y = "Amount of Sleep", 
+                                      title = "Amount of Sleep by Treatment Group")
+```
+It appears that those in Group A, on average, had more hours of sleep the night before the study than those in Group B. However, this alone does not prove that sleep is a confounding variable because we have not yet shown an association between amount of sleep and the number correct.
+```{r}
+MemLett %>% ggplot(aes(x=MemLett$`Number Correct`, y=MemLett$Sleep)) + 
+  geom_point() + coord_flip() +
+  labs(y="Amount of Sleep",x="Number Correct",
+       title="Number Correct vs. Hours of Sleep")
+```
+It appears that as the amount of sleep increases, the number correct also increases, but this is not always the case. Because there is a slight positive association between amount of sleep and the number correct and having already shown that one group had greater amounts of sleep, on average, than the other, we can conclude that the amount of sleep is a confounding variable.
+
+19. Explore the affect of caffeine consumption:
+```{r}
+AB.caffeine = MemLett %>% select(Group, Caffeine)
+library(ggmosaic)
+ggplot(AB.caffeine)+
+  geom_mosaic(aes(x=product(Group,Caffeine),fill=AB.caffeine$Group)) +
+  labs(x="Caffeine Consumption",y="Treatment Group",
+       title="Caffeine Consumption by Treatment Group",fill="Treatment Group")
+```
+The mosaic plot shows that more of the experimental units in Group A had caffeine while more of the experimental units in Group B did not have caffeine. In order to prove if caffeine is a confounding variable we must show an assocation between caffeine consumption and number correct.
+```{r}
+MemLett %>% select(`Person ID`, `Number Correct`, Caffeine) %>% group_by(MemLett$Caffeine) %>%  
+  ggplot(aes(x=`Person ID`, y=`Number Correct`, color=Caffeine)) + 
+  geom_point() +labs(x="Person ID", y="Number Correct", color = "Caffeine Consumption", 
+                     title="Number Correct Grouped by Caffeine Consumption.") +
+  geom_smooth(method='lm')
+```
+The plot above shows that those that had caffeine before scored higher than those that did not have caffeine. This is shown by the line corresponding to "Yes" being slightly higher than the line for "No". Because we earlier proved that a greater percentage of participants in Group A consumed caffeine than those in Group B, and now we showed the association between caffeine consumption and a greater number of letters correct, we decide that cafeeine is a confounding variable.
+
+20. There could be another explanation apart from the grouping of letters that may explain the difference in the two group means we found earlier. As we just explored, it is possible that the amount of sleep the experimental unit got the night prior as well as the consumption of caffeine plays a role in the number of letters remembered.
+
+21. In order to make predictions about how many letters a student will be able to memorize I recommend the Separate Means model. The standard error of the residuals decreased from 14.97 to 4.67 when we fit the Separate Means model. This means that there is less variation remaining in the response variable when using the Separate Means model. The difference in the Group means shows that on average, those that received their letters in a recognizable order scored higher than those that received them in a shuffled order. I am willing to generalize the observations to all students in MA376 for AY20-2. However, due to the fact that we found the amount of sleep and caffeine consumption to be confounding variables, I am not comfortable in drawing a cause-and-effect conclusion between the type of sequences and the ability to memorize more letters on average. 
+
+22. If I were to carry this study out myself I would look at gathering data from other STEM classes as well as non-stem classes. I would like to know if the experimental unit's major,age, and gender play a role in the outcome of the response variable. I think it also could be interesting to see if people that tend to work more and take notes on computers score higher or lower than those that handwrite and read more often.
+
+
+
+
+
+
