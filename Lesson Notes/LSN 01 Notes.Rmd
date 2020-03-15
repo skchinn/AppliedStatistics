@@ -1,0 +1,172 @@
+---
+title: "Lesson 1"
+author: "Samantha Chinn Nicholas Clark"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,results="hide",fig.show="hide")
+```
+
+# Contact Information
+
+LTC Nick Clark
+
+nicholas.clark@westpoint.edu
+
+Thayer Hall Room 226B (Back room, just keep going back...)
+
+845-938-0267
+
+# Course Overview
+
+\textit{Applied } Statistics
+
+-Learn Statistics by doing
+
+-Hands on/interactive
+
+-R/Rstudio
+
+-Course Overview
+
+-Graded Events
+
+# Introductions
+
+# Getting started with R studio/knitr
+
+# Berkely Admissions Data
+
+In the early 1970s, the University of California at Berkeley was concerned with possible
+discrimination against women in its graduate admissions process. Data about the applicants for
+the 1972–73 school year were recorded from several programs, including their sex and whether
+or not they were accepted (Bickel & O’Connell, Science, 1975).
+
+```{r}
+#install.packages("tidyverse")
+library(tidyverse)
+berkley.data<-read.table("http://www.isi-stats.com/isi2/data/Berkeley.txt",header=T)
+```
+
+Observational Unit: The noun we are taking the measurement of. The applicants for UC Berkely.
+
+\vspace{.2in}
+
+Response Variable: Whether or not they got accepted into UC Berkely (this specific R.V. is a categorical variable)
+
+\vspace{.2in}
+
+Values Response Variable can take on: Yes (Accepted) or No (Not Accepted)
+
+\vspace{.2in}
+
+Visualize
+
+```{r}
+ggplot(data=berkley.data,aes(Accepted))+geom_histogram(stat="count")
+```
+
+Explore
+```{r,include=F}
+no.program<-berkley.data %>% select(-Program)
+table(no.program)
+```
+Visualize the table:
+
+```{r}
+#install.packages
+library(ggmosaic)
+ggplot(data=no.program)+
+  geom_mosaic(aes(x=product(Accepted,Sex),fill=Accepted))
+```
+What's your thoughts? 
+\newline That there is potentially some gender bias.
+
+\vspace{.2in}
+
+What would the mosaic plot look like if sex was not associated with acceptance? 
+\newline Even split within individual gender columns.
+
+\vspace{.2in}
+
+What other variables might help us predict whether or not someone would be accepted? 
+\newline The program they applied to, their GPA, socio-economic background.
+
+\vspace{.4in}
+
+```{r}
+ggplot(data=berkley.data)+
+  geom_mosaic(aes(x=product(Accepted,Sex),fill=Accepted))+
+  facet_grid(Program~.)
+```
+
+What are your thoughts looking at this plot? 
+\newline More females were accpeted when looking at program A and program F independently.
+
+\vspace{.2in}
+
+How can it be that females have higher acceptance rates than males in Program A AND in Program F but when we combine the two, the overall acceptance rate is noticeably smaller for females? 
+\newline Simpson's Paradox - when a trend appears in several different groups of data, but disappears or reverses when the groups are combined.
+
+\vspace{.2in}
+
+In examining gender and acceptance what is \textbf{confounding?} 
+\newline Program
+
+\vspace{.2in}
+
+What else could contribute to an admissions decision other than sex and program? 
+\newline GPA, socio-economic, geographic
+
+\vspace{1.in}
+
+Sources of Variation Diagram: 
+\newline (Example p. 11 of textbook)
+
+\vspace{1.in}
+
+Six Steps of a statistical investigation
+
+\begin{itemize}
+\item Ask a Research Question
+
+\item Design a study and collect data
+
+\item Explore the data
+
+\item Draw inferences beyond the data
+
+\item Formulate conclusions
+
+\item Look back and ahead
+
+\end{itemize}
+
+
+Did we do this with the Berkley Data?  What would you tell the college administrators? 
+\newline There may be a problem. There is an impact due to gender, but it could be that gender is influencing program and program is influencing acceptance. Do more investigating: why are fewer females applying to program A than males? Is there a problem in recruiting for program A, is our outreach not as good for program A, is program A really hard and we are discouraging them from applying?
+
+\vspace{.5in}
+
+
+Let's brainstorm how to write a statistical model for the Berkley data. 
+\newline Use the Sources of Variation diagram to help write the statistical model. Some response which is a function of things we explain and we cannot explain. Cannot write a linear regression model because LHS is binary.
+
+\vspace{3.in}
+
+© 2020 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About

@@ -1,0 +1,178 @@
+---
+title: "Lesson 3"
+author: "Samantha Chinn - Nicholas Clark"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,results="show",fig.show="show")
+```
+
+## Admin
+
+\vspace{.3in}
+
+The begining of our text focuses on experiments vs. observational studies.  Why is this important?
+
+Experiments are controlled, the RHS is being manipulated by the experimenter. (There are decreased chances of having confounding variables, but there still is a chance!)
+\newline Observational studies are seeing things as they are.
+\newline What conclusions can you draw? You can examine causal consequences through observational studies (i.e. does smoking cause cancer) because you can consider two very similar samples to draw from (limited chance of confounding variables)
+
+\vspace{.2in}
+
+At West Point, as well as at most universities, prior to conducting an experiment, your \textbf{study protocol} must be reviewed by an Institutional Review Board or IRB.  The point of the IRB is to protect the rights of the subjects of a study as well as to ensure that inferences made from the study are statistically valid.
+
+A \textbf{double blind} study is: 
+
+1) Subject does not know which treatment condition they are in
+2) The person evaluating the response variable does not know the treatment condition
+
+\vspace{.2in}
+
+Why is this important?
+
+This removes bias from both people. 
+
+\vspace{.1in}
+
+Our book talks about a study on store ratings and wants to determine whether a rating is influenced by exposure to a scent.  Are there ethical issues with this study?
+
+Maybe..... probably not in this case.
+
+\vspace{.1in}
+
+
+The first model they consider is
+
+\begin{align*}
+i &= \mbox{ Student}\\
+y_i & = \mbox{rating of student }i\\
+y_i & = \mu + \epsilon_i
+\end{align*}
+
+What does $\epsilon_i$ represent in this model?
+
+All the things that aren't accounted for in the model.
+
+\vspace{.7in}
+
+Are there any assumptions we are making on $\epsilon_i$?
+
+* E[$\epsilon_i$] = 0
+* maybe $\epsilon_i$ ~ N   (not actually that important)
+* $\epsilon_i$ are independent
+* constant variance
+
+\vspace{.2in}
+
+The book says that the fitted model is:
+
+\begin{align*}
+y_i &= 4.48 + \epsilon_i\\
+\epsilon_i & \sim F(0,1.27)
+\end{align*}
+
+Note here I use the generic $F$ to stand for some distribution, I'm not making any distributional assumptions on $\epsilon_i$.  How did the book find $\hat{\mu}=4.48$ and the standard error of the residiuals as 1.27?
+
+\vspace{1.5in}
+
+What assumption are we making when we use this model?  What would our causal diagram look like?
+
+We can't explain any of our variability
+
+\vspace{.2in}
+
+What is the treatment variable?  Let's sketch out the sources of variation diagram
+
+Nothing, no treatments.
+
+\vspace{1.4in}
+
+Our proposed diagram is:
+
+\vspace{2.in}
+
+We can visualize:
+
+```{r,warning=FALSE,message=FALSE}
+library(tidyverse)
+dat=read.table("http://www.isi-stats.com/isi2/data/OdorRatings.txt",header=T)
+dat %>% ggplot(aes(x=condition, y=rating,fill=condition)) + 
+  #geom_violin(trim = FALSE)+
+  geom_dotplot(binaxis='y', stackdir='center')+
+  coord_flip()
+```
+
+
+A statistical model that could be used to address the scientific question is:
+
+Separate Means Model
+
+$i$ = 1 if exposed to scent, 2 if not
+
+$j$ = student
+
+$y_ij$ = score of student $i$,$j$
+
+$\mu_1$ = average rating given for a student exposed to scent
+
+$\mu_2$ = average rating given for a student not exposed to scent
+
+\vspace{.2in}
+
+
+How could we fit this model?  Well, getting the estimates for $\mu_1$ and $\mu_2$ shouldn't be hard.
+
+```{r}
+dat %>% group_by(condition)%>%summarize(samp.mus=mean(rating),sds=sd(rating))
+```
+
+
+```{r}
+scent.model=lm(rating~0+condition,data=dat)
+summary(scent.model)
+```
+
+Note that the standard error from this output does not match the standard error given on the top of page 39.  Why do you think that is?  How could we match the standard error given on page 39?
+
+Standard error from this output: 1.103
+Standard errors from p. 39: for 1, 1.24 for 2, 0.95
+
+The 'Model SE' (in R "Residual Standard Error") is a weighted combination of individual variances:
+
+\vspace{1.5in}
+
+Looking at the output, (ignoring p values for now), what appears to be happening?  How certain are we?  How could we be sure?
+
+SE for residuals in Null Model = 1.27
+
+SE for residuals in Multiple Means Model = 1.1
+
+SE for residuals: measure of the variation leftover
+
+The Multiple Means Model (considers scent) explains more variation than the Null Model.
+
+\vspace{.5in}
+
+What could be a confounding variable for this study?
+
+Gender
+
+The hope is that randomization makes the chance of this happening really, really low.
+
+\vspace{.2in}
+
+The most important part of thinking of confounding is given in figure (p. 40).
+
+\vspace{.5in}
+
+This is in our text, but it bears repeating: The goal of random assignment is to reduce the chances of there being any confounding variables in the study. By creating groups that are expected to be similar with respect to all variables (other than the treatment variable of interest) that may impact the response, random assignment attempts to eliminate confounding. A key consequence of not having variables confounded with the treatment variable in a randomized experiment is the potential to draw cause-and-effect conclusions between the treatment variable and the response variable.
+
+
+https://www.vox.com/science-and-health/2018/6/20/17464906/mediterranean-diet-science-health-predimed
+
+## Think - If our investigators wanted to know if there was a difference between `scent` and `noscent` what would we be testing in terms of our parameters?
+
